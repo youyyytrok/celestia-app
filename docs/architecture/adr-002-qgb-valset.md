@@ -37,7 +37,7 @@ Finally, if there are no validator set updates for the unbonding window, the bri
 
 ### Message types
 
-We added the following messages types:
+We added the following message types:
 
 #### Bridge Validator
 
@@ -131,7 +131,7 @@ lastUnbondingHeight := k.GetLastUnBondingBlockHeight(ctx)
 significantPowerDiff := false
 ```
 
-#### Check if there was a signification power difference between valsets
+#### Check if there was a significant power difference between valsets
 
 If the previous valset is not null, then we had a previous set of validators defining a certain power.
 We check if the current valset power is significantly different from the previous one. If so, we set the `significantPowerDiff` to true.

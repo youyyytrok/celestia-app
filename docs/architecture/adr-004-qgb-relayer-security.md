@@ -18,7 +18,7 @@ In fact, the QGB smart contract is designed to update the data commitments as fo
 - Check if the data commitment is signed using the current valset _(this is the problematic check)_
 - Then, other checks + commit
 
-So, if a relayer is up to date, it will submit data commitment and will pass the above checks.
+So, if a relayer is up-to-date, it will submit data commitment and will pass the above checks.
 
 Now, if the relayer is missing some data commitments or valset updates, then it will start catching up the following way:
 
@@ -199,7 +199,7 @@ func (k Keeper) SetLatestAttestationNonce(ctx sdk.Context, nonce uint64) {
     }
 
     store := ctx.KVStore(k.storeKey)
-    store.Set([]byte(types.LatestAttestationtNonce), types.UInt64Bytes(nonce))
+    store.Set([]byte(types.LatestAttestationNonce), types.UInt64Bytes(nonce))
 }
 ```
 
@@ -210,7 +210,7 @@ This will **panic** in the following cases:
 ```go
 func (k Keeper) CheckLatestAttestationNonce(ctx sdk.Context) bool {
     store := ctx.KVStore(k.storeKey)
-    has := store.Has([]byte(types.LatestAttestationtNonce))
+    has := store.Has([]byte(types.LatestAttestationNonce))
     return has
 }
 ```

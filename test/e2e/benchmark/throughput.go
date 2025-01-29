@@ -11,7 +11,7 @@ import (
 )
 
 var bigBlockManifest = Manifest{
-	ChainID:    "test",
+	ChainID:    appconsts.TestChainID,
 	Validators: 2,
 	TxClients:  2,
 	ValidatorResource: testnet.Resources{
@@ -33,7 +33,7 @@ var bigBlockManifest = Manifest{
 	CelestiaAppVersion: "pr-3261",
 	TxClientVersion:    "pr-3261",
 	EnableLatency:      false,
-	LatencyParams:      LatencyParams{70, 0}, // in  milliseconds
+	LatencyParams:      LatencyParams{70, 0}, // in milliseconds
 	BlobSequences:      60,
 	BlobsPerSeq:        6,
 	BlobSizes:          "200000",
@@ -90,7 +90,7 @@ func TwoNodeSimple(logger *log.Logger) error {
 		DisableBBR:         true,
 	}
 
-	benchTest, err := NewBenchmarkTest(testName, &manifest)
+	benchTest, err := NewBenchmarkTest(logger, testName, &manifest)
 	testnet.NoError("failed to create benchmark test", err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -113,8 +113,8 @@ func TwoNodeSimple(logger *log.Logger) error {
 func runBenchmarkTest(logger *log.Logger, testName string, manifest Manifest) error {
 	logger.Println("Running", testName)
 	manifest.ChainID = manifest.summary()
-	log.Println("ChainID: ", manifest.ChainID)
-	benchTest, err := NewBenchmarkTest(testName, &manifest)
+	logger.Println("ChainID: ", manifest.ChainID)
+	benchTest, err := NewBenchmarkTest(logger, testName, &manifest)
 	testnet.NoError("failed to create benchmark test", err)
 
 	ctx, cancel := context.WithCancel(context.Background())

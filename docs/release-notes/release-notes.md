@@ -9,7 +9,7 @@ This guide provides notes for major version releases. These notes may be helpful
 #### Enabling BBR and MCTCP
 
 Consensus node operators must enable the BBR (Bottleneck Bandwidth and Round-trip propagation time) congestion control algorithm. See [#3774](https://github.com/celestiaorg/celestia-app/pull/3774).
-if using linux in docker, kubernetes, a vm or baremetal, this can be done by calling
+If using Linux in Docker, Kubernetes, a VM or bare-metal, this can be done by calling
 
 ```sh
 make enable-bbr
@@ -31,18 +31,18 @@ If the config file is not in the default spot, it can be provided using:
 make configure-v3 CONFIG_FILE=path/to/other/config.toml
 ```
 
-**Alternatively**, the configurations can be changed manually. This involves updating the mempool TTLs and the send and the receive rates.
+**Alternatively**, the configurations can be changed manually. This involves updating the mempool TTLs and the send and receive rates.
 
 - Configuring Bandwidth Settings
-  - update `recv_rate` and `send_rate` in your TOML config file to 10MiB (10485760).
+  - Update `recv_rate` and `send_rate` in your TOML config file to 10MiB (10485760)
 - Extend TTLs
-  - update `ttl-num-blocks` in your TOML config file to 12.
+  - Update `ttl-num-blocks` in your TOML config file to 12
 
 #### Signaling Upgrades
 
 - Upgrades now use the `x/signal` module to coordinate the network to an upgrade height.
 
-The following command can be used, if you are a validator in the active set, to signal to upgrade to v3
+The following command can be used, if you are a validator in the active set, to signal to upgrade to v3:
 
 ```bash
 celestia-appd tx signal signal 3 <plus transaction flags>
@@ -73,9 +73,9 @@ For more information refer to the module [docs](../../x/signal/README.md)
 
 ### Node Operators (v2.0.0)
 
-If you are a consensus node operator, please follow the communication channels listed under [network upgrades](https://docs.celestia.org/nodes/participate#network-upgrades) to learn when this release is recommended for each network (e.g. Mocha, Mainnet Beta).
+If you are a consensus node operator, please follow the communication channels listed under [network upgrades](https://docs.celestia.org/how-to-guides/participate#network-upgrades) to learn when this release is recommended for each network (e.g. Mocha, Mainnet Beta).
 
-Consensus node operators are expected to upgrade to this release _prior_ to the Lemongrass hardfork if they intend to continue participating in the network. The command used to start the [consensus node](https://docs.celestia.org/nodes/consensus-node#start-the-consensus-node) or [validator node](https://docs.celestia.org/nodes/validator-node#run-the-validator-node) will accept an additional `--v2-upgrade-height` flag. See [this table](https://docs.celestia.org/nodes/network-upgrade-process#lemongrass-network-upgrade) for upgrade heights for each network.
+Consensus node operators are expected to upgrade to this release _prior_ to the Lemongrass hardfork if they intend to continue participating in the network. The command used to start the [consensus node](https://docs.celestia.org/how-to-guides/consensus-node#start-the-consensus-node) or [validator node](https://docs.celestia.org/how-to-guides/validator-node#run-the-validator-node) will accept an additional `--v2-upgrade-height` flag. See [this table](https://docs.celestia.org/how-to-guides/network-upgrade-process#lemongrass-network-upgrade) for upgrade heights for each network.
 
 Consensus node operators should enable the BBR (Bottleneck Bandwidth and Round-trip propagation time) congestion control algorithm. See [#3812](https://github.com/celestiaorg/celestia-app/pull/3812).
 

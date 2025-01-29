@@ -115,7 +115,7 @@ type App interface {
 	Name() string
 
 	// The application types codec.
-	// NOTE: This shoult be sealed before being returned.
+	// NOTE: This should be sealed before being returned.
 	LegacyAmino() *codec.LegacyAmino
 
 	// Application updates every begin block.
@@ -130,7 +130,7 @@ type App interface {
 	// Loads the app at a given height.
 	LoadHeight(height int64) error
 
-	// All the registered module account addreses.
+	// All the registered module account addresses.
 	ModuleAccountAddrs() map[string]bool
 
 	// Helper for the simulation framework.

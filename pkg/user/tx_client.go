@@ -129,7 +129,7 @@ func WithDefaultAccount(name string) Option {
 
 // TxClient is an abstraction for building, signing, and broadcasting Celestia transactions
 // It supports multiple accounts. If none is specified, it will
-// try use the default account.
+// try to use the default account.
 // TxClient is thread-safe.
 type TxClient struct {
 	mtx      sync.Mutex
@@ -463,6 +463,9 @@ func (client *TxClient) ConfirmTx(ctx context.Context, txHash string) (*TxRespon
 			return nil, client.handleEvictions(txHash)
 		default:
 			client.deleteFromTxTracker(txHash)
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
 			return nil, fmt.Errorf("transaction with hash %s not found; it was likely rejected", txHash)
 		}
 	}

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"time"
+
+	"github.com/celestiaorg/celestia-app/v3/app/grpc/gasestimation"
 
 	"github.com/celestiaorg/celestia-app/v3/app/ante"
 	"github.com/celestiaorg/celestia-app/v3/app/encoding"
@@ -170,6 +173,10 @@ type App struct {
 	// upgradeHeightV2 is used as a coordination mechanism for the height-based
 	// upgrade from v1 to v2.
 	upgradeHeightV2 int64
+	// timeoutCommit is used to override the default timeoutCommit. This is
+	// useful for testing purposes and should not be used on public networks
+	// (Arabica, Mocha, or Mainnet Beta).
+	timeoutCommit time.Duration
 	// MsgGateKeeper is used to define which messages are accepted for a given
 	// app version.
 	MsgGateKeeper *ante.MsgVersioningGateKeeper
@@ -180,7 +187,7 @@ type App struct {
 //
 // NOTE: upgradeHeightV2 refers specifically to the height that a node will
 // upgrade from v1 to v2. It will be deprecated in v3 in place for a dynamically
-// signalling scheme
+// signaling scheme
 func New(
 	logger log.Logger,
 	db dbm.DB,
@@ -188,6 +195,7 @@ func New(
 	invCheckPeriod uint,
 	encodingConfig encoding.Config,
 	upgradeHeightV2 int64,
+	timeoutCommit time.Duration,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *App {
@@ -214,6 +222,7 @@ func New(
 		tkeys:             tkeys,
 		memKeys:           memKeys,
 		upgradeHeightV2:   upgradeHeightV2,
+		timeoutCommit:     timeoutCommit,
 	}
 
 	app.ParamsKeeper = initParamsKeeper(appCodec, encodingConfig.Amino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
@@ -258,7 +267,7 @@ func New(
 	)
 
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(appCodec, keys[feegrant.StoreKey], app.AccountKeeper)
-	// The upgrade keeper is intialised solely for the ibc keeper which depends on it to know what the next validator hash is for after the
+	// The upgrade keeper is initialised solely for the ibc keeper which depends on it to know what the next validator hash is for after the
 	// upgrade. This keeper is not used for the actual upgrades but merely for compatibility reasons. Ideally IBC has their own upgrade module
 	// for performing IBC based upgrades. Note, as we use rolling upgrades, IBC technically never needs this functionality.
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(nil, keys[upgradetypes.StoreKey], appCodec, "", app.BaseApp, authtypes.NewModuleAddress(govtypes.ModuleName).String())
@@ -472,7 +481,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 				panic(err)
 			}
 		}
-		// from v2 to v3 and onwards we use a signalling mechanism
+		// from v2 to v3 and onwards we use a signaling mechanism
 	} else if shouldUpgrade, newVersion := app.SignalKeeper.ShouldUpgrade(ctx); shouldUpgrade {
 		// Version changes must be increasing. Downgrades are not permitted
 		if newVersion > currentVersion {
@@ -481,7 +490,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 			app.SignalKeeper.ResetTally(ctx)
 		}
 	}
-	res.Timeouts.TimeoutCommit = appconsts.GetTimeoutCommit(currentVersion)
+	res.Timeouts.TimeoutCommit = app.getTimeoutCommit(currentVersion)
 	res.Timeouts.TimeoutPropose = appconsts.GetTimeoutPropose(currentVersion)
 	return res
 }
@@ -539,8 +548,8 @@ func (app *App) Info(req abci.RequestInfo) abci.ResponseInfo {
 		app.mountKeysAndInit(resp.AppVersion)
 	}
 
+	resp.Timeouts.TimeoutCommit = app.getTimeoutCommit(resp.AppVersion)
 	resp.Timeouts.TimeoutPropose = appconsts.GetTimeoutPropose(resp.AppVersion)
-	resp.Timeouts.TimeoutCommit = appconsts.GetTimeoutCommit(resp.AppVersion)
 
 	return resp
 }
@@ -565,7 +574,7 @@ func (app *App) InitChain(req abci.RequestInitChain) (res abci.ResponseInitChain
 		app.SetInitialAppVersionInConsensusParams(ctx, appVersion)
 		app.SetAppVersion(ctx, appVersion)
 	}
-	res.Timeouts.TimeoutCommit = appconsts.GetTimeoutCommit(appVersion)
+	res.Timeouts.TimeoutCommit = app.getTimeoutCommit(appVersion)
 	res.Timeouts.TimeoutPropose = appconsts.GetTimeoutPropose(appVersion)
 	return res
 }
@@ -746,6 +755,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *api.Server, _ config.APIConfig) {
 func (app *App) RegisterTxService(clientCtx client.Context) {
 	authtx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate, app.interfaceRegistry)
 	celestiatx.RegisterTxService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+	gasestimation.RegisterGasEstimationService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.BaseApp.Simulate)
 }
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
@@ -848,4 +858,14 @@ func (app *App) OfferSnapshot(req abci.RequestOfferSnapshot) abci.ResponseOfferS
 
 func isSupportedAppVersion(appVersion uint64) bool {
 	return appVersion == v1 || appVersion == v2 || appVersion == v3
+}
+
+// getTimeoutCommit returns the timeoutCommit if a user has overridden it via the
+// --timeout-commit flag. Otherwise, it returns the default timeout commit based
+// on the app version.
+func (app *App) getTimeoutCommit(appVersion uint64) time.Duration {
+	if app.timeoutCommit != 0 {
+		return app.timeoutCommit
+	}
+	return appconsts.GetTimeoutCommit(appVersion)
 }
